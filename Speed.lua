@@ -1,35 +1,51 @@
--- LocalScript (ضع هذا في StarterCharacterScripts)
+-- تعريف المتغيرات
+local textBox = script.Parent
+local musicService = game:GetService("SoundService")
 
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
+-- جدول يحتوي على أكواد الموسيقى
+local musicLibrary = {
+    -- يمكنك تغيير الأكواد وIDs الموسيقى هنا
+    -- للعثور على IDs الموسيقى، اذهب إلى Roblox Library
+    ["happy"] = 123456789,   -- مثال: ID لموسيقى سعيدة
+    ["epic"] = 987654321,    -- مثال: ID لموسيقى ملحمية
+    ["chill"] = 112233445    -- مثال: ID لموسيقى هادئة
+}
 
--- اسم اللاعب الذي نريد التحول إلى شخصيته
-local targetPlayerName = "s9cythe"
-
-local function transformCharacter()
-    local targetPlayer = Players:FindFirstChild(targetPlayerName)
-    
-    if targetPlayer and targetPlayer.Character then
-        local newCharacter = targetPlayer.Character:Clone()
-        
-        -- إزالة أي سكريبتات أو كائنات قد تسبب مشاكل
-        for _, obj in ipairs(newCharacter:GetDescendants()) do
-            if obj:IsA("Script") or obj:IsA("LocalScript") then
-                obj:Destroy()
-            end
-        end
-
-        Player.Character = newCharacter
-        newCharacter.Parent = workspace
-
-        print("تم تغيير الشخصية بنجاح إلى " .. targetPlayerName)
-        Character:Destroy()
-    else
-        warn("اللاعب " .. targetPlayerName .. " غير موجود حاليًا في اللعبة.")
+-- الدالة المسؤولة عن تشغيل الموسيقى
+function playMusic(id)
+    -- إيقاف أي موسيقى سابقة
+    if musicService.Playing then
+        musicService:Stop()
     end
+    
+    -- إنشاء ملف الصوت وتشغيله
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. id
+    sound.Parent = musicService
+    
+    sound:Play()
+    sound.Ended:Wait()
+    
+    -- حذف ملف الصوت بعد الانتهاء
+    sound:Destroy()
 end
 
--- انتظر لعدة ثوانٍ للتأكد من أن شخصية اللاعب المستهدف قد تم تحميلها
-task.wait(5)
-transformCharacter()
+-- حدث عندما يضغط اللاعب على Enter في مربع النص
+textBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local inputCode = string.lower(textBox.Text) -- تحويل النص إلى حروف صغيرة
+        
+        -- التحقق من الكود المكتوب
+        if musicLibrary[inputCode] then
+            print("Playing music for code: " .. inputCode)
+            playMusic(musicLibrary[inputCode])
+            textBox.Text = "" -- مسح النص بعد التشغيل
+        else
+            print("Invalid code: " .. inputCode)
+            textBox.PlaceholderText = "Invalid Code!"
+            wait(2)
+            textBox.PlaceholderText = "Enter Music Code"
+            textBox.Text = ""
+        end
+    end
+end)
